@@ -231,8 +231,8 @@ void TreeModel::setupModelData(const QStringList &lines, TreeItem *parent)
 
 void TreeModel::resetModel()
 {
-    emit beginResetModel();
-    emit endResetModel();
+    beginResetModel();
+    endResetModel();
 }
 
 bool TreeModel::removeRows(int position, int count, const QModelIndex &parent)

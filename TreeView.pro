@@ -9,11 +9,7 @@ CONFIG += c++11
 SOURCES += \
         main.cpp \
         model/treeitem.cpp \
-        model/treemodel.cpp \
-        node.cpp \
-        vegatreelines.cpp \
-        vegatreeobject.cpp \
-        vegatreeview.cpp
+        model/treemodel.cpp
 
 RESOURCES += qml.qrc
 
@@ -30,10 +26,6 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 
 HEADERS += \
     model/treeitem.h \
-    model/treemodel.h \
-    node.h \
-    vegatreelines.h \
-    vegatreeobject.h \
-    vegatreeview.h
+    model/treemodel.h
 
 DISTFILES +=

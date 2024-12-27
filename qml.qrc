@@ -1,7 +1,9 @@
 <RCC>
     <qresource prefix="/">
         <file>main.qml</file>
-        <file>TreeLine.qml</file>
         <file>default.txt</file>
+        <file>RowDelegate.qml</file>
+        <file>Node.qml</file>
+        <file>TreeView.qml</file>
     </qresource>
 </RCC>

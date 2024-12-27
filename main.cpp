@@ -1,5 +1,3 @@
-#include "vegatreeview.h"
-
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
 #include "model/treemodel.h"
@@ -12,7 +10,6 @@ int main(int argc, char *argv[])
 
     QGuiApplication app(argc, argv);
 
-    qmlRegisterType<VegaTreeView>("Views", 1, 0, "VegaTreeView");
     qmlRegisterType<TreeModel>("Models", 1, 0, "TreeModel");
 
     QQmlApplicationEngine engine;

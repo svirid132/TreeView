@@ -1,7 +1,7 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Window 2.15
-import Views 1.0
+import QtQuick.Layouts 1.15
 import Models 1.0
 
 Window {
@@ -11,28 +11,39 @@ Window {
     visible: true
     title: qsTr("Hello World")
 
-    Item {
-        anchors.fill: parent
-        TreeModel {
+    TreeView {
+        id: treeView
+        width: 300
+        height: window.height
+        model: TreeModel {
             id: treeModel
         }
-
-        VegaTreeView {
-            spacing: 30
-            anchors.fill: parent
-            model: treeModel
-            delegate: TreeLine {
-                model: treeModel
+        delegate: RowDelegate {
+            width: treeView.width
+            backgroundColor: n_hasChildren ? 'yellow' : 'orange'
+            level: n_level
+            text: n_modelIndex.row !== -1 ? treeModel.data(n_modelIndex, 0) : ''
+            onOpened: {
+                if (n_isOpened) {
+                    n_close()
+                    return
+                }
+                n_open()
             }
-        }
-
-        Button {
-            text: 'resetModel'
-            anchors.bottom: parent.bottom
-            onClicked: {
-                treeModel.resetModel()
+            onInserted: {
+                treeModel.insertRows(0, 1, n_modelIndex)
+            }
+            onRemoved: {
+                treeModel.removeRows(n_modelIndex.row, 1, n_modelIndex.parent)
             }
         }
     }
 
+    Button {
+        x: 400
+        text: 'reset model'
+        onClicked: {
+            treeModel.resetModel()
+        }
+    }
 }
