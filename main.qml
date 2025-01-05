@@ -29,10 +29,7 @@ Window {
                 return n_hasChildren ? 'yellow' : 'orange'
             }
             level: n_level
-            text: {
-                const filePath = fileSystemModel.filePath(n_modelIndex)
-                n_modelIndex.row !== -1 ? fileSystemModel.filePath(n_modelIndex) + ' ' + fileSystemModel.getSizeInMB(filePath) : ''
-            }
+            text: fileSystemModel.filePath(n_modelIndex)
             onOpened: {
                 if (n_animationRunning) {
                     return

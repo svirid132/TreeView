@@ -1,6 +1,7 @@
 #ifndef FILESYSTEMMODEL_H
 #define FILESYSTEMMODEL_H
 
+#include <QDebug>
 #include <QFileSystemModel>
 #include <QJSValue>
 
@@ -9,8 +10,7 @@ class FileSystemModel : public QFileSystemModel {
 public:
     using QFileSystemModel::fetchMore;
     FileSystemModel(QObject *parent = nullptr) : QFileSystemModel(parent) {
-        setRootPath(QDir::currentPath());
-        setOption(QFileSystemModel::DontWatchForChanges, true);
+        setRootPath(QDir::rootPath());
     }
     Q_INVOKABLE QString filePath(const QModelIndex &index) {
         return QFileSystemModel::filePath(index);
@@ -24,7 +24,7 @@ public:
         });
     }
     Q_INVOKABLE QModelIndex rootModelIndex() {
-        return index(QDir::currentPath());
+        return index(-1, -1);
     }
     Q_INVOKABLE QString getSizeInMB(const QString &path) {
         QFileInfo fileInfo(path);
