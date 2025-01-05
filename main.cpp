@@ -1,6 +1,9 @@
+#include <QFileSystemModel>
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
+#include "model/FileSystemModel.h"
 #include "model/treemodel.h"
+#include <QDebug>
 
 int main(int argc, char *argv[])
 {
@@ -11,6 +14,7 @@ int main(int argc, char *argv[])
     QGuiApplication app(argc, argv);
 
     qmlRegisterType<TreeModel>("Models", 1, 0, "TreeModel");
+    qmlRegisterType<FileSystemModel>("Models", 1, 0, "FileSystemModel");
 
     QQmlApplicationEngine engine;
     const QUrl url(QStringLiteral("qrc:/main.qml"));

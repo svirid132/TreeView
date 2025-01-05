@@ -9,26 +9,85 @@ Item {
 
     required property Component delegate
     required property var model
-    property var modelIndex: model.index(-1, -1)
+    property var modelIndex: model.index(-1, 0)
     property int level: -1
 
-    function open() {
-        const rowCount = root.model.rowCount(root.modelIndex)
-        var nodeChildrenObjs = []
-        for (let i = 0; i < rowCount; ++i) {
-            var component = Qt.createComponent("Node.qml")
-            const modelIndex = root.model.index(i, 0, root.modelIndex)
-            var node = component.createObject(null, {delegate: root.delegate, width: root.width, level: root.level + 1, model: root.model, modelIndex: modelIndex})
-            nodeChildrenObjs.push(node)
-        }
-        nodeChildrenColumn.children = nodeChildrenObjs
-    }
+    property string state: ''
 
+    // Connections {
+    //     target: root.model
+    //     function onModelReset() {
+    //         if (level === -1) {
+    //             root.close()
+    //             root.open()
+    //         }
+    //     }
+    //     function onRowsInserted(parentModelIndex, first, last) {
+    //         if (root.modelIndex === parentModelIndex) {
+    //             console.log('inserted!!!')
+    //             const items = listToArr(nodeChildrenColumn.children)
+    //             itemNodeLoader.update()
+    //             if (items.length === 0) {
+    //                 return
+    //             }
+    //             const spliceArr = createNodes(first, last)
+    //             items.splice(first, 0, ...spliceArr)
+    //             nodeChildrenColumn.children = items
+    //             updateChildModelIndex()
+    //         }
+    //     }
+    //     function onRowsRemoved(parentModelIndex, first, last) {
+    //         console.log('onRowsRemoved', root.modelIndex === parentModelIndex)
+    //         if (root.modelIndex === parentModelIndex) {
+    //             console.log('rowsRemoved')
+    //             const items = listToArr(nodeChildrenColumn.children)
+    //             if (items.length === 0) {
+    //                 return
+    //             }
+    //             itemNodeLoader.update()
+    //             for (let ind = first; ind <= last; ++ind) {
+    //                 items[ind].destroy()
+    //             }
+    //             const len = last - first + 1
+    //             items.splice(first, len)
+    //             nodeChildrenColumn.children = items
+    //             updateChildModelIndex()
+    //         }
+    //     }
+    // }
+    function open(onFinished) {
+        const cb = function() {
+            const lastInd = root.model.rowCount(root.modelIndex) - 1
+            var nodeChildrenObjs = createNodes(0, lastInd)
+            nodeChildrenColumn.children = nodeChildrenObjs
+            if(onFinished) {
+                onFinished()
+            }
+        }
+        if (root.model.canFetchMore(root.modelIndex)) {
+            root.model.fetchMore(root.modelIndex, cb )
+            return
+        }
+        cb()
+    }
+    function animationOpen() {
+        open(function() {
+            const cb = function() {
+                items.animationImplicitHeight(0, nodeChildrenColumn.implicitHeight)
+                nodeChildrenColumn.onImplicitHeightChanged.disconnect(cb)
+            }
+            nodeChildrenColumn.onImplicitHeightChanged.connect(cb)
+        })
+    }
     function close() {
         const childrenNodes = nodeChildrenColumn.children
         for (let i = 0; i < childrenNodes.length; ++i) {
             childrenNodes[i].destroy()
         }
+        nodeChildrenColumn.children = []
+    }
+    function animationClose() {
+        items.animationImplicitHeight(nodeChildrenColumn.implicitHeight, 0, root.close)
     }
     function listToArr(list) {
         const arr = []
@@ -42,7 +101,7 @@ Item {
         root.modelIndex = modelIndex
         const items = nodeChildrenColumn.children
         for (let i = 0; i < items.length; ++i) {
-            items.updateModelIndex(i, root)
+            items[i].updateChildModelIndex()
         }
     }
     function updateChildModelIndex() {
@@ -51,61 +110,20 @@ Item {
             items[i].updateModelIndex(i, root)
         }
     }
-    function insert(parentModelIndex, first, last) {
-        const items = listToArr(nodeChildrenColumn.children)
-        const modelIndex = root.modelIndex
-        if (modelIndex === parentModelIndex) {
-            itemNodeLoader.update()
-            if (items.length === 0) {
-                return false
-            }
-            const len = last - first + 1
-            const arr = []
-            const spliceArr = []
-            for (let ind = first; ind <= last; ++ind) {
-                var component = Qt.createComponent("Node.qml")
-                const modelIndex = root.model.index(ind, 0, root.modelIndex)
-                var node = component.createObject(null, {delegate: root.delegate, width: root.width, level: root.level + 1, model: root.model, modelIndex: modelIndex})
-                spliceArr.push(node)
-            }
-            items.splice(first, 0, ...spliceArr)
-            nodeChildrenColumn.children = items
-            updateChildModelIndex()
-            return true
-        } else {
-            for (let i = 0; i < items.length; ++i) {
-                if (items[i].insert(parentModelIndex, first, last)) {
-                    return true
-                }
-            }
+    function createNodes(firstInd, lastInd) {
+        const arr = []
+        for (let ind = firstInd; ind <= lastInd; ++ind) {
+            let component = Qt.createComponent("Node.qml")
+            const modelIndex = root.model.index(ind, 0, root.modelIndex)
+            let node = component.createObject(null, {delegate: root.delegate, width: root.width, level: root.level + 1, model: root.model, modelIndex: modelIndex})
+            arr.push(node)
         }
-        return false
+        return arr
     }
-    function remove(parentModelIndex, first, last) {
-        const items = listToArr(nodeChildrenColumn.children)
-        if (items.length === 0) {
-            return false
-        }
-        if (root.modelIndex === parentModelIndex) {
-            itemNodeLoader.update()
-            const len = last - first + 1
-            items.splice(first, len)
-            nodeChildrenColumn.children = items
-            updateChildModelIndex()
-            return true
-        } else {
-            for (let i = 0; i < items.length; ++i) {
-                if (items[i].remove(parentModelIndex, first, last)) {
-                    return true
-                }
-            }
-        }
-        return false
-    }
-
     ColumnLayout {
         id: columnLayout
         width: parent.width
+        spacing: 0
         Loader {
             id: itemNodeLoader
             function update() {
@@ -115,22 +133,53 @@ Item {
             property var n_modelIndex: root.modelIndex
             property var n_hasChildren: root.model.hasChildren(root.modelIndex)
             property bool n_isOpened: nodeChildrenColumn.children.length !== 0
-            signal n_open()
-            onN_open: {
+            property alias n_animationRunning: animation.running
+            function n_open() {
                 root.open()
             }
-            signal n_close()
-            onN_close: {
+            function n_close() {
                 root.close()
+            }
+            function n_animationOpen() {
+                root.animationOpen()
+            }
+            function n_animationClose() {
+                root.animationClose()
             }
             sourceComponent: root.delegate
             visible: root.modelIndex.row !== -1
         }
         Item {
+            id: items
             implicitWidth: childrenRect.width
-            implicitHeight: childrenRect.height
+            function linkImplicitHeight() {
+                items.implicitHeight = Qt.binding(function() { return nodeChildrenColumn.height })
+            }
+            function animationImplicitHeight(from, to, onFinished) {
+                const cb = function() {
+                    if (onFinished) {
+                        onFinished()
+                    }
+                    items.linkImplicitHeight()
+                    animation.onFinished.disconnect(cb)
+                }
+                animation.onFinished.connect(cb)
+                animation.from = from
+                animation.to = to
+                animation.start()
+            }
+            PropertyAnimation {
+                id: animation
+                target: items
+                property: "implicitHeight"
+                duration: 500
+            }
             ColumnLayout {
                 id: nodeChildrenColumn
+                spacing: 0
+            }
+            Component.onCompleted: {
+                linkImplicitHeight()
             }
         }
     }

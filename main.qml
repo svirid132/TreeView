@@ -11,31 +11,44 @@ Window {
     visible: true
     title: qsTr("Hello World")
 
+    FileSystemModel {
+        id: fileSystemModel
+    }
+
     TreeView {
         id: treeView
-        width: 300
-        height: window.height
-        model: TreeModel {
-            id: treeModel
-        }
+        anchors.fill: parent
+        model: fileSystemModel
+        rootModelIndex: fileSystemModel.rootModelIndex()
         delegate: RowDelegate {
             width: treeView.width
-            backgroundColor: n_hasChildren ? 'yellow' : 'orange'
+            backgroundColor: {
+                if (n_animationRunning) {
+                    return 'red'
+                }
+                return n_hasChildren ? 'yellow' : 'orange'
+            }
             level: n_level
-            text: n_modelIndex.row !== -1 ? treeModel.data(n_modelIndex, 0) : ''
+            text: {
+                const filePath = fileSystemModel.filePath(n_modelIndex)
+                n_modelIndex.row !== -1 ? fileSystemModel.filePath(n_modelIndex) + ' ' + fileSystemModel.getSizeInMB(filePath) : ''
+            }
             onOpened: {
-                if (n_isOpened) {
-                    n_close()
+                if (n_animationRunning) {
                     return
                 }
-                n_open()
+                if (n_isOpened) {
+                    n_animationClose()
+                    return
+                }
+                n_animationOpen()
             }
-            onInserted: {
-                treeModel.insertRows(0, 1, n_modelIndex)
-            }
-            onRemoved: {
-                treeModel.removeRows(n_modelIndex.row, 1, n_modelIndex.parent)
-            }
+            // onInserted: {
+            //     treeModel.insertRows(0, 1, n_modelIndex)
+            // }
+            // onRemoved: {
+            //     treeModel.removeRows(n_modelIndex.row, 1, n_modelIndex.parent)
+            // }
         }
     }
 
@@ -43,7 +56,7 @@ Window {
         x: 400
         text: 'reset model'
         onClicked: {
-            treeModel.resetModel()
+            fileSystemModel.resetModel()
         }
     }
 }
