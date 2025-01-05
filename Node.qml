@@ -12,49 +12,44 @@ Item {
     property var modelIndex: model.index(-1, 0)
     property int level: -1
 
-    property string state: ''
-
-    // Connections {
-    //     target: root.model
-    //     function onModelReset() {
-    //         if (level === -1) {
-    //             root.close()
-    //             root.open()
-    //         }
-    //     }
-    //     function onRowsInserted(parentModelIndex, first, last) {
-    //         if (root.modelIndex === parentModelIndex) {
-    //             console.log('inserted!!!')
-    //             const items = listToArr(nodeChildrenColumn.children)
-    //             itemNodeLoader.update()
-    //             if (items.length === 0) {
-    //                 return
-    //             }
-    //             const spliceArr = createNodes(first, last)
-    //             items.splice(first, 0, ...spliceArr)
-    //             nodeChildrenColumn.children = items
-    //             updateChildModelIndex()
-    //         }
-    //     }
-    //     function onRowsRemoved(parentModelIndex, first, last) {
-    //         console.log('onRowsRemoved', root.modelIndex === parentModelIndex)
-    //         if (root.modelIndex === parentModelIndex) {
-    //             console.log('rowsRemoved')
-    //             const items = listToArr(nodeChildrenColumn.children)
-    //             if (items.length === 0) {
-    //                 return
-    //             }
-    //             itemNodeLoader.update()
-    //             for (let ind = first; ind <= last; ++ind) {
-    //                 items[ind].destroy()
-    //             }
-    //             const len = last - first + 1
-    //             items.splice(first, len)
-    //             nodeChildrenColumn.children = items
-    //             updateChildModelIndex()
-    //         }
-    //     }
-    // }
+    Connections {
+        target: root.model
+        function onModelReset() {
+            if (level === -1) {
+                root.close()
+                root.open()
+            }
+        }
+        function onRowsInserted(parentModelIndex, first, last) {
+            if (root.modelIndex === parentModelIndex) {
+                const items = listToArr(nodeChildrenColumn.children)
+                itemNodeLoader.update()
+                if (items.length === 0) {
+                    return
+                }
+                const spliceArr = createNodes(first, last)
+                items.splice(first, 0, ...spliceArr)
+                nodeChildrenColumn.children = items
+                updateChildModelIndex()
+            }
+        }
+        function onRowsRemoved(parentModelIndex, first, last) {
+            if (root.modelIndex === parentModelIndex) {
+                const items = listToArr(nodeChildrenColumn.children)
+                if (items.length === 0) {
+                    return
+                }
+                itemNodeLoader.update()
+                for (let ind = first; ind <= last; ++ind) {
+                    items[ind].destroy()
+                }
+                const len = last - first + 1
+                items.splice(first, len)
+                nodeChildrenColumn.children = items
+                updateChildModelIndex()
+            }
+        }
+    }
     function open(onFinished) {
         const cb = function() {
             const lastInd = root.model.rowCount(root.modelIndex) - 1
@@ -115,7 +110,7 @@ Item {
         for (let ind = firstInd; ind <= lastInd; ++ind) {
             let component = Qt.createComponent("Node.qml")
             const modelIndex = root.model.index(ind, 0, root.modelIndex)
-            let node = component.createObject(null, {delegate: root.delegate, width: root.width, level: root.level + 1, model: root.model, modelIndex: modelIndex})
+            let node = component.createObject(nodeChildrenColumn, {delegate: root.delegate, width: root.width, level: root.level + 1, model: root.model, modelIndex: modelIndex})
             arr.push(node)
         }
         return arr
